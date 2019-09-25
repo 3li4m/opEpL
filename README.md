@@ -1,8 +1,3 @@
-# Macquarie University, Department of Computing
-
-## COMP332 Programming Languages 2019
-
-## weBCPL, a retro programming language for the web
 
 ### Introduction
 
