@@ -69,7 +69,10 @@ class SyntaxAnalysis(positions: Positions)
     FINISH ^^^ FinishStmt()
 
   // FIXME Add your parsers for weBCPL statements here.
-
+  lazy val iteratedStmt: PackratParser[Statement] =
+    (UNTIL ~> expression) ~ (DO ~> statement) ^^ UntilDoStmt |
+      (WHILE ~> expression) ~ (DO ~> statement) ^^ WhileDoStmt |
+      FOR ~ idndef ~ equal ~ expression ~ expression ~ opt(BY ~> expression) ~ DO ~> statement
   /*
    * Expression parsers.
    */
@@ -86,9 +89,10 @@ class SyntaxAnalysis(positions: Positions)
     * Level 1, parse if expressions `->`.
     */
   // FIXME Replace this stubbed parser
+  //We do this because we see these statements being used like this in relExp and are able to view other information via crtl + left click
+
   lazy val condExp: PackratParser[Expression] =
-  expression ~> rightArrow ~> expression ~> comma ~> expression |
-  relExp
+  expression ~ (rightArrow ~> expression) ~ (comma ~> expression) ^^ IfExp | relExp
 
   // FIXME Add your expression parsers for levels 1-6 of the precedence hierarchy here.
 

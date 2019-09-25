@@ -62,6 +62,7 @@
     </option>
     <option name="modificationStamps">
       <map>
+        <entry key="$PROJECT_DIR$" value="3138434644984" />
         <entry key="$PROJECT_DIR$/build.sbt" value="3410025886" />
         <entry key="$PROJECT_DIR$/project/build.properties" value="1396028727" />
       </map>
