@@ -69,10 +69,73 @@ class SyntaxAnalysis(positions: Positions)
     FINISH ^^^ FinishStmt()
 
   // FIXME Add your parsers for weBCPL statements here.
+  /**
+    * iteratedStmt :
+    *    "UNTIL" expression "DO" statement
+    *    | "WHILE" expression "DO" statement
+    *    | "FOR" idndef "=" expression "TO" expression
+    *    ("BY" expression)? "DO" statement
+   */
   lazy val iteratedStmt: PackratParser[Statement] =
     (UNTIL ~> expression) ~ (DO ~> statement) ^^ UntilDoStmt |
       (WHILE ~> expression) ~ (DO ~> statement) ^^ WhileDoStmt |
       FOR ~ idndef ~ equal ~ expression ~ expression ~ opt(BY ~> expression) ~ DO ~> statement
+
+  /**
+    * testStmt :
+    * "TEST" expression "THEN" statement "ELSE" statement
+    * | "IF" expression "DO" statement
+    * | "UNLESS" expression "DO" statement
+   */
+  lazy val testStmt: PackratParser[Statement] =
+    (TEST ~> expression) ~ (THEN ~> statement) ~ (ELSE ~> statement) ^^ TestThenElseStmt |
+      (IF ~> expression) ~ (DO ~> statement) ^^ IfDoStmt |
+      (UNLESS ~> expression) ~ (DO ~> statement) ^^ UnlessDoStmt
+
+  /**
+    * repeatableStmt :
+    * repeatableStmt "REPEAT"
+    * | repeatableStmt "REPEATWHILE" expression
+    * | repeatableStmt "REPEATUNTIL" expression
+    * | simpleStmt
+    */
+  lazy val repeatableStmt: PackratParser[Statement] =
+    repeatableStmt <~ REPEAT ^^ RepeatStmt |
+      repeatableStmt ~ (REPEATWHILE ~> expression) ^^ RepeatWhileStmt |
+      repeatableStmt ~ (REPEATUNTIL ~> expression) ^^ RepeatUntilStmt |
+      simpleStmt
+
+  /**
+    * simpleStmt :
+    * (expression ",")* expression ":=" (expression ",")* expression
+    * | callExp
+    * | "BREAK" | "LOOP" | "ENDCASE" | "RETURN" | "FINISH"
+    * | "GOTO" labuse
+    * | "RESULTIS" expression
+    * | "SWITCHON" expression "INTO" blockStmt
+    * | blockStmt
+    *
+    * rep1sep(idndef, comma) ~ (equal ~> rep1sep(expression, comma)) ^^ LetVarClause |
+    */
+  lazy val simpleStmt: PackratParser[Statement] =
+    rep1sep(expression,comma) ~ (assign ~> rep1sep(expression,comma)) ^^ AssignStmt |
+      callExp |
+      BREAK ^^^ BreakStmt() |
+      LOOP ^^^ LoopStmt() |
+      ENDCASE ^^^ EndCaseStmt() |
+      RETURN ^^^ ReturnStmt() |
+      FINISH ^^^ FinishStmt() |
+      GOTO ~> labuse ^^ GotoStmt|
+      RESULTIS ~> expression ^^ ResultIsStmt |
+      (SWITCHON ~> expression) ~ (INTO ~> blockStmt) ^^ SwitchOnStmt |
+      blockStmt
+
+  /**
+    * blockStmt : "{" (declaration ";")* (statement ";")* statement "}"
+    */
+  lazy val blockStmt: PackratParser[Statement] =
+    leftBrace ~> repsep(declaration,semiColon) ~ rep1sep(statement, semiColon) <~ rightBrace ^^ Block
+
   /*
    * Expression parsers.
    */
