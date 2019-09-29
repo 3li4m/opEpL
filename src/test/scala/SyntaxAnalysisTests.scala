@@ -29,6 +29,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   import BCPLTree._
 
   val parsers = new SyntaxAnalysis(positions)
+
   import parsers._
 
   /*
@@ -106,10 +107,10 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   }
 
   test("parsing string constant with BCPL style escapes") {
-    stringConst("""  "This *n is *b a *t test *x7F"  """) should 
+    stringConst("""  "This *n is *b a *t test *x7F"  """) should
       parseTo[Vector[Int]](
         Vector(
-          84, 104, 105, 115, 32, 10, 32, 105, 115, 32, 8, 32, 97, 
+          84, 104, 105, 115, 32, 10, 32, 105, 115, 32, 8, 32, 97,
           32, 9, 32, 116, 101, 115, 116, 32, 127))
   }
 
@@ -144,18 +145,19 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   }
 
   test("parsing of string constants ignores * fenced whitespace") {
-    stringConst("""   "This is a test, *  // Comment
+    stringConst(
+      """   "This is a test, *  // Comment
             *here is some more"""") should parseTo[Vector[Int]](
       Vector(
         84, 104, 105, 115, 32, 105, 115, 32, 97, 32, 116, 101,
         115, 116, 44, 32, 104, 101, 114, 101, 32, 105, 115, 32,
         115, 111, 109, 101, 32, 109, 111, 114, 101))
   }
-  
+
   test("parsing line end character in string literal fails") {
     stringConst(
       """|"Hello
-         |World!"""".stripMargin) should 
+         |World!"""".stripMargin) should
       failParseAt(1, 7, "unterminated string literal")
   }
 
@@ -182,7 +184,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   }
 
   test("parsing character literal interrupted by end of input fails") {
-    charConst("'") should 
+    charConst("'") should
       failParseAt(1, 2, "end of line/input in character literal")
   }
   test("parsing 'TRUE'") {
@@ -225,13 +227,13 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
          |GLOBAL {
          |  getch : 1
          |  putch : 2
-         |}""".stripMargin) should 
-    parseTo[Declaration](
-      GlobalDecl(
-        Vector(
-          GlobalEntry(IdnDef("getch"), Some(IntExp(1))),
-          GlobalEntry(IdnDef("putch"), Some(IntExp(2)))))
-    )
+         |}""".stripMargin) should
+      parseTo[Declaration](
+        GlobalDecl(
+          Vector(
+            GlobalEntry(IdnDef("getch"), Some(IntExp(1))),
+            GlobalEntry(IdnDef("putch"), Some(IntExp(2)))))
+      )
   }
 
   test("parsing 'GLOBAL' declaration with missing initialisers") {
@@ -265,7 +267,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
         StaticDecl(
           Vector(
             StaticEntry(IdnDef("charCount"), Some(IntExp(256))),
-            StaticEntry(IdnDef("endOfLine"), Some(FalseExp()))  
+            StaticEntry(IdnDef("endOfLine"), Some(FalseExp()))
           )))
   }
 
@@ -308,7 +310,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
         ManifestDecl(
           Vector(ManifestEntry(IdnDef("charCount"), Some(IntExp(256))))
         ))
-}
+  }
 
   test("parsing simple 'MANIFEST' declaration") {
     phrase(declaration)("MANIFEST { charCount = 256; endOfLine = FALSE }") should
@@ -316,7 +318,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
         ManifestDecl(
           Vector(
             ManifestEntry(IdnDef("charCount"), Some(IntExp(256))),
-            ManifestEntry(IdnDef("endOfLine"), Some(FalseExp()))  
+            ManifestEntry(IdnDef("endOfLine"), Some(FalseExp()))
           )))
   }
 
@@ -350,11 +352,11 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   // `LET` declarations of variables
 
   test("parse of variable declaration without initialiser should fail") {
-    phrase(declaration)("LET x =") should failParseAt(1,8)
+    phrase(declaration)("LET x =") should failParseAt(1, 8)
   }
 
   test("parse of variable declaration without equals should fail") {
-    phrase(declaration)("LET x 28") should failParseAt(1,7)
+    phrase(declaration)("LET x 28") should failParseAt(1, 7)
   }
 
   test("parse declaration of a single variable") {
@@ -362,7 +364,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
       LetDecl(
         Vector(
           LetVarClause(
-            Vector(IdnDef("x")), 
+            Vector(IdnDef("x")),
             Vector(IntExp(28))))))
   }
 
@@ -371,32 +373,32 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
       LetDecl(
         Vector(
           LetVarClause(
-            Vector(IdnDef("x"), IdnDef("y")), 
+            Vector(IdnDef("x"), IdnDef("y")),
             Vector(IntExp(28), UndefExp())))))
   }
 
   test("parse declaration of four variables") {
-    phrase(declaration)("LET x, y, width, height = 28, ?, SIZE, SIZE") should 
+    phrase(declaration)("LET x, y, width, height = 28, ?, SIZE, SIZE") should
       parseTo[Declaration](
         LetDecl(
           Vector(
             LetVarClause(
               Vector(
-                IdnDef("x"), IdnDef("y"), 
-                IdnDef("width"), IdnDef("height")), 
+                IdnDef("x"), IdnDef("y"),
+                IdnDef("width"), IdnDef("height")),
               Vector(
-                IntExp(28), UndefExp(), 
-                IdnExp(IdnUse("SIZE")),  IdnExp(IdnUse("SIZE")))))))
+                IntExp(28), UndefExp(),
+                IdnExp(IdnUse("SIZE")), IdnExp(IdnUse("SIZE")))))))
   }
 
   // `LET` declaration of `VEC`tors.
 
   test("parse of vector declaration missing equals fails") {
-    phrase(declaration)("LET v VEC 10") should failParseAt(1,7)
+    phrase(declaration)("LET v VEC 10") should failParseAt(1, 7)
   }
 
   test("parse of vector declaration missing size expression fails") {
-    phrase(declaration)("LET v = VEC") should failParseAt(1,12)
+    phrase(declaration)("LET v = VEC") should failParseAt(1, 12)
   }
 
   test("parse simple vector declaration") {
@@ -415,29 +417,29 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
 
   // `LET` declarations of functions
 
-  test("parsing a function declaration without equals fails"){
-    phrase(declaration)("LET f(x) x") should failParseAt(1,10)
+  test("parsing a function declaration without equals fails") {
+    phrase(declaration)("LET f(x) x") should failParseAt(1, 10)
   }
 
-  test("parsing a function declaration without defining expression fails"){
-    phrase(declaration)("LET f() =") should failParseAt(1,10)
+  test("parsing a function declaration without defining expression fails") {
+    phrase(declaration)("LET f() =") should failParseAt(1, 10)
   }
 
-  test("parse a function declaration with no formal parameters"){
+  test("parse a function declaration with no formal parameters") {
     phrase(declaration)("LET f() = 10") should parseTo[Declaration](
       LetDecl(
         Vector(
           LetFnClause(IdnDef("f"), Vector(), IntExp(10)))))
   }
 
-  test("parse a function declaration with a single formal parameter"){
+  test("parse a function declaration with a single formal parameter") {
     phrase(declaration)("LET hello(x) = x") should parseTo[Declaration](
       LetDecl(
         Vector(
           LetFnClause(IdnDef("hello"), Vector(IdnDef("x")), IdnExp(IdnUse("x"))))))
   }
 
-  test("parse a function declaration with multiple parameters"){
+  test("parse a function declaration with multiple parameters") {
     phrase(declaration)("LET g(u, v, w, x, y, z) = f(u, z)") should
       parseTo[Declaration](
         LetDecl(
@@ -445,7 +447,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
             LetFnClause(
               IdnDef("g"),
               Vector(
-                IdnDef("u"), IdnDef("v"), IdnDef("w"), 
+                IdnDef("u"), IdnDef("v"), IdnDef("w"),
                 IdnDef("x"), IdnDef("y"), IdnDef("z")),
               CallExp(
                 IdnExp(IdnUse("f")),
@@ -454,29 +456,29 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
 
   // `LET` declarations of procedures
 
-  test("parsing a procedure declaration without `BE` fails"){
-    phrase(declaration)("LET f(x) FINISH") should failParseAt(1,10)
+  test("parsing a procedure declaration without `BE` fails") {
+    phrase(declaration)("LET f(x) FINISH") should failParseAt(1, 10)
   }
 
-  test("parsing a procudere declaration without defining statement fails"){
-    phrase(declaration)("LET f() BE") should failParseAt(1,11)
+  test("parsing a procudere declaration without defining statement fails") {
+    phrase(declaration)("LET f() BE") should failParseAt(1, 11)
   }
 
-  test("parse a procedure declaration with no formal parameters"){
+  test("parse a procedure declaration with no formal parameters") {
     phrase(declaration)("LET f() BE FINISH") should parseTo[Declaration](
       LetDecl(
         Vector(
           LetProcClause(IdnDef("f"), Vector(), FinishStmt()))))
   }
 
-  test("parse a procedure declaration with a single formal parameter"){
+  test("parse a procedure declaration with a single formal parameter") {
     phrase(declaration)("LET hello(x) BE FINISH") should parseTo[Declaration](
       LetDecl(
         Vector(
           LetProcClause(IdnDef("hello"), Vector(IdnDef("x")), FinishStmt()))))
   }
 
-  test("parse a procedure declaration with multiple parameters"){
+  test("parse a procedure declaration with multiple parameters") {
     phrase(declaration)("LET g(u, v, w, x, y, z) BE FINISH") should
       parseTo[Declaration](
         LetDecl(
@@ -484,7 +486,7 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
             LetProcClause(
               IdnDef("g"),
               Vector(
-                IdnDef("u"), IdnDef("v"), IdnDef("w"), 
+                IdnDef("u"), IdnDef("v"), IdnDef("w"),
                 IdnDef("x"), IdnDef("y"), IdnDef("z")),
               FinishStmt()))))
   }
@@ -495,11 +497,11 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
     phrase(declaration)(
       """|LET a = VEC SIZE
          |AND f(x) = x""".stripMargin) should parseTo[Declaration](
-           LetDecl(
-              Vector(
-                LetVecClause(IdnDef("a"), IdnExp(IdnUse("SIZE"))),
-                LetFnClause(
-                  IdnDef("f"), Vector(IdnDef("x")), IdnExp(IdnUse("x"))))))
+      LetDecl(
+        Vector(
+          LetVecClause(IdnDef("a"), IdnExp(IdnUse("SIZE"))),
+          LetFnClause(
+            IdnDef("f"), Vector(IdnDef("x")), IdnExp(IdnUse("x"))))))
   }
 
   test("parse a more complex `LET` declaration with `AND` clauses") {
@@ -508,14 +510,14 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
          |AND c = VEC 22
          |AND f(x) = x
          |AND g() BE FINISH""".stripMargin) should parseTo[Declaration](
-           LetDecl(
-             Vector(
-               LetVarClause(
-                 Vector(IdnDef("a"), IdnDef("b")),
-                 Vector(IntExp(10), UndefExp())),
-                LetVecClause(IdnDef("c"), IntExp(22)),
-                LetFnClause(IdnDef("f"), Vector(IdnDef("x")), IdnExp(IdnUse("x"))),
-                LetProcClause(IdnDef("g"), Vector(), FinishStmt()))))
+      LetDecl(
+        Vector(
+          LetVarClause(
+            Vector(IdnDef("a"), IdnDef("b")),
+            Vector(IntExp(10), UndefExp())),
+          LetVecClause(IdnDef("c"), IntExp(22)),
+          LetFnClause(IdnDef("f"), Vector(IdnDef("x")), IdnExp(IdnUse("x"))),
+          LetProcClause(IdnDef("g"), Vector(), FinishStmt()))))
   }
 
   /*
@@ -536,14 +538,14 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   }
 
   test("parse simple function call with more than one argument") {
-    phrase(expression)("""writef("Count: %n, Success: %b", count, TRUE)""") should 
+    phrase(expression)("""writef("Count: %n, Success: %b", count, TRUE)""") should
       parseTo[Expression](
         CallExp(
           IdnExp(IdnUse("writef")),
           Vector(
             StringExp(
               Vector(
-                67, 111, 117, 110, 116, 58, 32, 37, 110, 44, 32, 83, 
+                67, 111, 117, 110, 116, 58, 32, 37, 110, 44, 32, 83,
                 117, 99, 99, 101, 115, 115, 58, 32, 37, 98)),
             IdnExp(IdnUse("count")),
             TrueExp())))
@@ -574,9 +576,9 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
 
   test("parsing a sequence of two relations") {
     phrase(expression)("a = b = c") should parseTo[Expression](
-        AndExp(
-          EqualExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b"))),
-          EqualExp(IdnExp(IdnUse("b")), IdnExp(IdnUse("c")))))
+      AndExp(
+        EqualExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b"))),
+        EqualExp(IdnExp(IdnUse("b")), IdnExp(IdnUse("c")))))
   }
 
   test("parsing a sequence of three relations") {
@@ -601,9 +603,63 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
 
   // FIXME Add your automated tests here.
   test("test level 1") {
-    phrase(expression)("a->b,c") should parseTo[Expression](
-        IfExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")), IdnExp(IdnUse("c")))
-      )
+    phrase(expression)("a -> b, c") should parseTo[Expression](
+      IfExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")), IdnExp(IdnUse("c")))
+    )
   }
-
+  test("test level 2 EQV") {
+    phrase(expression)("a EQV b") should parseTo[Expression](
+      EqvExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+    )
+  }
+  test("test level 2 XOR") {
+    phrase(expression)("a XOR b") should parseTo[Expression](
+      XorExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+    )
+  }
+  test("test level 3 |") {
+    phrase(expression)("a | b") should parseTo[Expression](
+      OrExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+    )
+  }
+  test("test level 4 &") {
+    phrase(expression)("a & b") should parseTo[Expression](
+      AndExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+    )
+  }
+  test("test level plus expression a + b") {
+    phrase(expression)("a + b") should parseTo[Expression](
+      PlusExp(IdnExp(IdnUse("a")),IdnExp(IdnUse("b")))
+    )
+  }
+  test("test level negate -") {
+    phrase(expression)("-a") should parseTo[Expression](
+      NegExp(IdnExp(IdnUse("a")))
+    )
+  }
+  test("test level plus +") {
+    phrase(expression)("+a") should parseTo[Expression](
+      IdnExp(IdnUse("a"))
+    )
+  }
+  test("test level ABS") {
+    phrase(expression)("ABS a") should parseTo[Expression](
+      AbsExp(IdnExp(IdnUse("a")))
+    )
+  }
+  test("test level UnaryPling !") {
+    phrase(expression)("!abc") should parseTo[Expression](
+      UnaryPlingExp(IdnExp(IdnUse("abc")))
+    )
+  }
+  test("test level UnaryPercent %") {
+    phrase(expression)("%abc") should parseTo[Expression](
+      UnaryBytePlingExp(IdnExp(IdnUse("abc")))
+    )
+  }
+  test("test level at @") {
+    phrase(expression)("@abc") should parseTo[Expression](
+      AddrOfExp (IdnExp(IdnUse("abc")))
+    )
+  }
 }
