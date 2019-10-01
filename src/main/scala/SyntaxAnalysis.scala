@@ -60,7 +60,7 @@ class SyntaxAnalysis(positions: Positions)
 
   lazy val statement: PackratParser[Statement] =
     (labdef <~ colon) ~ statement ^^ Labelled |
-      (CASE ~> expression <~ colon) ~ statement ^^ CaseOf |
+      (CASE ~> expression) ~ (colon ~> statement) ^^ CaseOf |
       DEFAULT ~> colon ~> statement ^^ Default |
       unlabelledStmt
 
@@ -81,8 +81,8 @@ class SyntaxAnalysis(positions: Positions)
    */
   lazy val iteratedStmt: PackratParser[Statement] =
     (UNTIL ~> expression) ~ (DO ~> statement) ^^ UntilDoStmt |
-      (WHILE ~> expression) ~ (DO ~> statement) ^^ WhileDoStmt |
-      ((FOR ~> idndef) <~ equal) ~ expression ~ (TO ~> expression) ~ opt(BY ~> expression) ~ (DO ~> statement) ^^ ForStmt
+      (WHILE ~> expression) ~ (DO ~> repeatableStmt) ^^ WhileDoStmt |
+      (FOR ~> idndef) ~ (equal ~> expression) ~ (TO ~> expression) ~ opt(BY ~> expression) ~ (DO ~> statement) ^^ ForStmt
 
   /**
     * case class ForStmt(
@@ -129,7 +129,7 @@ class SyntaxAnalysis(positions: Positions)
     * | blockStmt
     */
   lazy val simpleStmt: PackratParser[Statement] =
-    (rep1sep(expression,comma) <~ assign) ~ rep1sep(expression,comma) ^^ AssignStmt |
+    rep1sep(expression,comma) ~ (assign ~> rep1sep(expression,comma)) ^^ AssignStmt |
       callExp ^^ CallStmt |
       BREAK ^^^ BreakStmt() |
       LOOP ^^^ LoopStmt() |
@@ -145,7 +145,7 @@ class SyntaxAnalysis(positions: Positions)
     * blockStmt : "{" (declaration ";")* (statement ";")* statement "}"
     */
   lazy val blockStmt: PackratParser[Block] =
-    leftBrace ~> rep1sep(declaration,semiColon) ~ rep1sep(statement, semiColon) <~ rightBrace ^^ Block
+    leftBrace ~> repsep(declaration,semiColon) ~ rep1sep(statement, semiColon) <~ rightBrace ^^ Block
 
   /*
    * Expression parsers.
@@ -164,18 +164,32 @@ class SyntaxAnalysis(positions: Positions)
     */
   // FIXME Replace this stubbed parser
   lazy val condExp: PackratParser[Expression] =
-    expression ~ (rightArrow ~> expression) ~ (comma ~> expression) ^^ IfExp |
-    (expression <~ EQV) ~ expression ^^ EqvExp |
-    (expression <~ XOR) ~ expression ^^ XorExp |
-    (expression <~ pipe) ~ expression ^^ OrExp |
-    (expression <~ apersand) ~ expression ^^ AndExp |
-    NOT ~> expression ^^ NotExp |
-    (expression <~ shiftLeft) ~ expression ^^ ShiftLeftExp |
-    (expression <~ shiftRight) ~ expression ^^ ShiftRightExp |
-    relExp
+    eqvXorExp ~ (rightArrow ~> condExp) ~ (comma ~> condExp) ^^ IfExp |
+      eqvXorExp
 
   // FIXME Add your expression parsers for levels 1-6 of the precedence hierarchy here.
 
+  lazy val eqvXorExp: PackratParser[Expression] =
+    (eqvXorExp <~ EQV) ~ orExp ^^ EqvExp |
+      (eqvXorExp <~ XOR) ~ orExp ^^ XorExp |
+      orExp
+
+  lazy val orExp: PackratParser[Expression] =
+    (orExp <~ pipe) ~ andExp ^^ OrExp |
+      andExp
+
+  lazy val andExp: PackratParser[Expression] =
+    (andExp <~ apersand) ~ notExp ^^ AndExp |
+      notExp
+
+  lazy val notExp: PackratParser[Expression] =
+    NOT ~> notExp ^^ NotExp |
+      shiftExp
+
+  lazy val shiftExp: PackratParser[Expression] =
+    (shiftExp <~ shiftLeft) ~ relExp ^^ ShiftLeftExp |
+      (shiftExp <~ shiftRight) ~ relExp ^^ ShiftRightExp |
+      relExp
   /**
     * Level 7, parse relational expressions `~=`, `=`, `>=`, `<=`...
     *
@@ -221,24 +235,34 @@ class SyntaxAnalysis(positions: Positions)
     * | expression "%" expression
     */
   lazy val addExp: PackratParser[Expression] =
-    (expression <~ plus) ~ expression ^^ PlusExp |
-      (expression <~ minus) ~ expression ^^ MinusExp |
-      unaryMinus ~> expression ^^ NegExp |
-      unaryPlus ~> expression |
-      ABS ~> expression ^^ AbsExp |
-      (expression <~ star) ~ expression ^^ StarExp |
-      (expression <~ slash) ~ expression ^^ SlashExp |
-      (expression <~ MOD) ~ expression ^^ ModExp |
-      unaryPling ~> expression ^^ UnaryPlingExp |
-      unaryPercent ~> expression ^^ UnaryBytePlingExp |
-      at ~> expression ^^ AddrOfExp |
-      (expression <~ pling) ~ expression ^^ BinaryPlingExp |
-      (expression <~ percent) ~ expression ^^ BinaryBytePlingExp |
-      primaryExp
+    (addExp <~ plus) ~ unaryAddExp ^^ PlusExp |
+      (addExp <~ minus) ~ unaryAddExp ^^ MinusExp |
+      unaryAddExp
 
   // FIXME Add your expression parsers for levels 8-12 of the precedence hierarchy here.
 
+  lazy val unaryAddExp: PackratParser[Expression] =
+    unaryMinus ~> unaryAddExp ^^ NegExp |
+      unaryPlus ~> unaryAddExp |
+      ABS ~> unaryAddExp ^^ AbsExp |
+      multiExp
 
+  lazy val multiExp: PackratParser[Expression] =
+    (multiExp <~ star) ~ addressExp ^^ StarExp |
+      (multiExp <~ slash) ~ addressExp ^^ SlashExp |
+      (multiExp <~ MOD) ~ addressExp ^^ ModExp |
+      addressExp
+
+  lazy val addressExp: PackratParser[Expression] =
+    unaryPling ~> addressExp ^^ UnaryPlingExp |
+      unaryPercent ~> addressExp ^^ UnaryBytePlingExp |
+      at ~> addressExp ^^ AddrOfExp |
+      vecExp
+
+  lazy val vecExp: PackratParser[Expression] =
+    (vecExp <~ pling) ~ primaryExp ^^ BinaryPlingExp |
+      (vecExp <~ percent) ~ primaryExp ^^ BinaryBytePlingExp |
+      primaryExp
   /**
     * Level 13, parse primary expressions, that is function calls, identifiers,
     * bracketed expressions, and literal constants.

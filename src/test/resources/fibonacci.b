@@ -18,7 +18,7 @@ GLOBAL {
     writef: 94
 }
 
-LET Fibonacci(n) = VALOF 
+LET Fibonacci(n) = VALOF
 {
     LET res1, res2, temp = 0, 1, ?
 

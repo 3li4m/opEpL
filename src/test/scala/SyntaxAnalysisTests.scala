@@ -15,7 +15,7 @@
 
 package webcpl
 
-import org.bitbucket.inkytonik.kiama.util.ParseTests
+import org.bitbucket.inkytonik.kiama.util.{ParseTests}
 import org.junit.runner.RunWith
 import org.scalatest.junit.JUnitRunner
 
@@ -602,64 +602,447 @@ class SyntaxAnalysisTests extends ParseTests with ParseTestExtras {
   }
 
   // FIXME Add your automated tests here.
-  test("test level 1") {
+  test("Test condExp") {
     phrase(expression)("a -> b, c") should parseTo[Expression](
-      IfExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")), IdnExp(IdnUse("c")))
+      IfExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")),
+        IdnExp(IdnUse("c")))
     )
   }
-  test("test level 2 EQV") {
+  test("Test condExp Associativity") {
+    phrase(expression)("a -> b, c -> d, e") should parseTo[Expression](
+      IfExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")),
+        IfExp(
+          IdnExp(IdnUse("c")),
+          IdnExp(IdnUse("d")),
+          IdnExp(IdnUse("e"))
+        )))
+  }
+  test("Test EQV") {
     phrase(expression)("a EQV b") should parseTo[Expression](
-      EqvExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+      EqvExp(IdnExp(
+        IdnUse("a")),
+        IdnExp(IdnUse("b")))
     )
   }
-  test("test level 2 XOR") {
+  test("Test EQV Associativity") {
+    phrase(expression)("a EQV b EQV c") should parseTo[Expression](
+      EqvExp(
+        EqvExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test XOR") {
     phrase(expression)("a XOR b") should parseTo[Expression](
-      XorExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+      XorExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
     )
   }
-  test("test level 3 |") {
+  test("Test XOR Associativity") {
+    phrase(expression)("a XOR b XOR c") should parseTo[Expression](
+      XorExp(
+        XorExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test OR |") {
     phrase(expression)("a | b") should parseTo[Expression](
-      OrExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+      OrExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
     )
   }
-  test("test level 4 &") {
+  test("Test OR | Associativity") {
+    phrase(expression)("a | b | c") should parseTo[Expression](
+      OrExp(
+        OrExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test And &") {
     phrase(expression)("a & b") should parseTo[Expression](
-      AndExp(IdnExp(IdnUse("a")), IdnExp(IdnUse("b")))
+      AndExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
     )
   }
-  test("test level plus expression a + b") {
+  test("Test And & Associativity") {
+    phrase(expression)("a & b & c") should parseTo[Expression](
+      AndExp(
+        AndExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test Not") {
+    phrase(expression)("NOT b") should parseTo[Expression](
+      NotExp(IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test ShiftLeft <<") {
+    phrase(expression)("a << b") should parseTo[Expression](
+      ShiftLeftExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test ShiftLeft << Associativity") {
+    phrase(expression)("a << b << c") should parseTo[Expression](
+      ShiftLeftExp(
+        ShiftLeftExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test ShiftRight >>") {
+    phrase(expression)("a >> b") should parseTo[Expression](
+      ShiftRightExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test ShiftRight >> Associativity") {
+    phrase(expression)("a >> b >> c") should parseTo[Expression](
+      ShiftRightExp(
+        ShiftRightExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test ShiftRight >> ShiftLeft <<") {
+    phrase(expression)("a >> b << c") should parseTo[Expression](
+      ShiftLeftExp(
+        ShiftRightExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test Plus a + b") {
     phrase(expression)("a + b") should parseTo[Expression](
-      PlusExp(IdnExp(IdnUse("a")),IdnExp(IdnUse("b")))
+      PlusExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
     )
   }
-  test("test level negate -") {
+  test("Test Plus a + b + c") {
+    phrase(expression)("a + b + c") should parseTo[Expression](
+      PlusExp(
+        PlusExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+      ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test Minus a - b") {
+    phrase(expression)("a - b") should parseTo[Expression](
+      MinusExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test Minus a - b - c") {
+    phrase(expression)("a - b - c") should parseTo[Expression](
+      MinusExp(
+        MinusExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+      ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test Unary Negate -") {
     phrase(expression)("-a") should parseTo[Expression](
       NegExp(IdnExp(IdnUse("a")))
     )
   }
-  test("test level plus +") {
+  test("Test Unary Plus +") {
     phrase(expression)("+a") should parseTo[Expression](
       IdnExp(IdnUse("a"))
     )
   }
-  test("test level ABS") {
+  test("Test Unary ABS") {
     phrase(expression)("ABS a") should parseTo[Expression](
       AbsExp(IdnExp(IdnUse("a")))
     )
   }
-  test("test level UnaryPling !") {
+  test("Test Multiplication a * b") {
+    phrase(expression)("a * b") should parseTo[Expression](
+      StarExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test Multiplication a * b * c") {
+    phrase(expression)("a * b * c") should parseTo[Expression](
+      StarExp(
+        StarExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test Divide a / b") {
+    phrase(expression)("a / b") should parseTo[Expression](
+      SlashExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test Divide a / b / c") {
+    phrase(expression)("a / b / c") should parseTo[Expression](
+      SlashExp(
+        SlashExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test Mod a MOD b") {
+    phrase(expression)("a MOD b") should parseTo[Expression](
+      ModExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test Mod a MOD b MOD c") {
+    phrase(expression)("a MOD b MOD c") should parseTo[Expression](
+      ModExp(
+        ModExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test UnaryPling !") {
     phrase(expression)("!abc") should parseTo[Expression](
       UnaryPlingExp(IdnExp(IdnUse("abc")))
     )
   }
-  test("test level UnaryPercent %") {
+  test("Test UnaryPercent %") {
     phrase(expression)("%abc") should parseTo[Expression](
       UnaryBytePlingExp(IdnExp(IdnUse("abc")))
     )
   }
-  test("test level at @") {
+  test("Test at @") {
     phrase(expression)("@abc") should parseTo[Expression](
       AddrOfExp (IdnExp(IdnUse("abc")))
     )
+  }
+  test("Test BinaryPling a ! b") {
+    phrase(expression)("a ! b") should parseTo[Expression](
+      BinaryPlingExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test BinaryPling a ! b ! c") {
+    phrase(expression)("a ! b ! c") should parseTo[Expression](
+      BinaryPlingExp(
+        BinaryPlingExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("Test BinaryBytePling a % b") {
+    phrase(expression)("a % b") should parseTo[Expression](
+      BinaryBytePlingExp(
+        IdnExp(IdnUse("a")),
+        IdnExp(IdnUse("b")))
+    )
+  }
+  test("Test BinaryBytePling a % b % c") {
+    phrase(expression)("a % b % c") should parseTo[Expression](
+      BinaryBytePlingExp(
+        BinaryBytePlingExp(
+          IdnExp(IdnUse("a")),
+          IdnExp(IdnUse("b"))
+        ),
+        IdnExp(IdnUse("c")))
+    )
+  }
+  test("test assign") {
+    phrase(statement)("a := b") should parseTo[Statement](
+      AssignStmt(
+        Vector(IdnExp(IdnUse("a"))),
+        Vector(IdnExp(IdnUse("b")))
+      )
+    )
+  }
+
+  test("parse declaration of a var") {
+    phrase(statement)("? := res2") should parseTo[Statement](
+      AssignStmt(
+        Vector(UndefExp()),
+        Vector(IdnExp(IdnUse("res2")))
+      )
+    )
+  }
+  test("oio") {
+    phrase(declaration)("LET res1, res2, temp = 0, 1, ?") should
+      parseTo[Declaration](
+        LetDecl(
+          Vector(
+            LetVarClause(
+              Vector(
+                IdnDef("res1"), IdnDef("res2"),
+                IdnDef("temp")),
+              Vector(
+                IntExp(0),IntExp(1),
+                UndefExp())))))
+  }
+  test("assign a to res2") {
+    phrase(statement)("a := res2") should parseTo[Statement](
+      AssignStmt(
+        Vector(IdnExp(IdnUse("a"))),
+        Vector(IdnExp(IdnUse("res2")))
+      )
+    )
+  }
+  test("assign a ") {
+    phrase(program)(
+      """
+      |GLOBAL {
+      |   start:  1
+      |   writef: 94
+      |}
+
+      |LET Fibonacci(n) = VALOF
+      |{
+      |    LET res1, res2, temp = 0, 1, ?
+
+      |    WHILE 0 < n DO {
+      |       temp := res1
+      |       res1 := res2
+      |       res2 := temp + res1
+      |        n := n - 1
+      |   }
+
+      | RESULTIS res1
+      |}
+
+      |LET start() BE
+      |{
+      |   writef(
+      |       "The 10th Fibonacci number is %n*n",
+      |        fibonacci(n))
+      |}""".stripMargin) should parseTo[Program](
+      Program(
+        Vector(
+          GlobalDecl(
+            Vector(
+              GlobalEntry(IdnDef("start"), Some(IntExp(1))),
+              GlobalEntry(IdnDef("writef"), Some(IntExp(94))))),
+          LetDecl(
+            Vector(
+              LetFnClause(
+                IdnDef("Fibonacci"),
+                Vector(IdnDef("n")),
+                ValofExp(
+                  Block(
+                    Vector(
+                      LetDecl(
+                        Vector(
+                          LetVarClause(
+                            Vector(IdnDef("res1"), IdnDef("res2"), IdnDef("temp")),
+                            Vector(IntExp(0), IntExp(1), UndefExp()))))),
+                    Vector(
+                      WhileDoStmt(
+                        LessExp(IntExp(0), IdnExp(IdnUse("n"))),
+                        Block(
+                          Vector(),
+                          Vector(
+                            AssignStmt(
+                              Vector(IdnExp(IdnUse("temp"))),
+                              Vector(IdnExp(IdnUse("res1")))),
+                            AssignStmt(
+                              Vector(IdnExp(IdnUse("res1"))),
+                              Vector(IdnExp(IdnUse("res2")))),
+                            AssignStmt(
+                              Vector(IdnExp(IdnUse("res2"))),
+                              Vector(
+                                PlusExp(
+                                  IdnExp(IdnUse("temp")),
+                                  IdnExp(IdnUse("res1"))))),
+                            AssignStmt(
+                              Vector(IdnExp(IdnUse("n"))),
+                              Vector(MinusExp(IdnExp(IdnUse("n")), IntExp(1))))))),
+                      ResultIsStmt(IdnExp(IdnUse("res1"))))))))),
+          LetDecl(
+            Vector(
+              LetProcClause(
+                IdnDef("start"),
+                Vector(),
+                Block(
+                  Vector(),
+                  Vector(
+                    CallStmt(
+                      CallExp(
+                        IdnExp(IdnUse("writef")),
+                        Vector(
+                          StringExp(
+                            Vector(
+                              84,
+                              104,
+                              101,
+                              32,
+                              49,
+                              48,
+                              116,
+                              104,
+                              32,
+                              70,
+                              105,
+                              98,
+                              111,
+                              110,
+                              97,
+                              99,
+                              99,
+                              105,
+                              32,
+                              110,
+                              117,
+                              109,
+                              98,
+                              101,
+                              114,
+                              32,
+                              105,
+                              115,
+                              32,
+                              37,
+                              110,
+                              10)),
+                          CallExp(
+                            IdnExp(IdnUse("fibonacci")),
+                            Vector(IdnExp(IdnUse("n")))))))))))))))
+
   }
 }
